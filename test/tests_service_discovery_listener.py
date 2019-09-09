@@ -1,6 +1,7 @@
 import unittest
 import socket
 import struct
+import json
 
 import core
 from core.service_discovery_listener import ServiceDiscoveryListener
@@ -20,11 +21,18 @@ class ServiceDiscoveryListenerTest(unittest.TestCase):
         service_discovery_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         ttl = struct.pack('b', 1)
         service_discovery_socket.setsockopt(socket.IPPROTO_IP, socket.IP_MULTICAST_TTL, ttl)
-        request = '{"request" : {"service" : "test", "version" : 1}}'
+        request = '{"request" : {"version" : "1"}}'
         multicast_group = ("224.3.29.71", 8081)
 
         try:
             sent = service_discovery_socket.sendto(request.encode(), multicast_group)
+            self.assertFalse(sent == 0)
+            response = service_discovery_socket.recv(4096)
+            print("Response: {}".format(response.decode()))
+            response = json.loads(response.decode())
+            port_no = response["response"]["port-no"]
+            self.assertIsNot(port_no, -1)
+
         finally:
             service_discovery_socket.close()
 

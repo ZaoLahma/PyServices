@@ -21,6 +21,8 @@ class ServiceDiscoveryListener:
         self.multicast_socket.setsockopt(socket.IPPROTO_IP, socket.IP_ADD_MEMBERSHIP, mreq)
         self.multicast_socket.settimeout(0.001)
 
+        self.own_ip = self.get_own_ip()
+
     def run(self):
         try:
             data = self.multicast_socket.recvfrom(4096)
@@ -30,7 +32,35 @@ class ServiceDiscoveryListener:
             raise
         else:
             print("Data: {}".format(data))
-            data = json.loads(data[0].decode())
-            service = data["request"]["service"]
-            version = data["request"]["version"]
-            print("ServiceDiscoveryListener received {} - {}".format(service, version))
+            request = json.loads(data[0].decode())
+            version = request["request"]["version"]
+
+            port_no = None
+            try:
+                port_no = self.config.get_config("service-port-numbers", version)
+            except KeyError:
+                port_no = -1
+
+            print("ServiceDiscoveryListener - Returning {} on port_no: {}".format(self.own_ip, port_no))
+
+            response = {}
+            response["response"] = {}
+            response["response"]["port-no"] = port_no
+
+            response = json.dumps(response)
+
+            client_endpoint = data[1]
+            response_socket = None
+            try:
+                response_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+                response_socket.sendto(response.encode(), client_endpoint)
+            finally:
+                response_socket.close()
+
+    def get_own_ip(self):
+        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        s.connect(('5.255.255.255', 1))
+        IP = s.getsockname()[0]
+        s.close()
+        return IP
+                
