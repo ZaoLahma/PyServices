@@ -21,7 +21,7 @@ class ServiceDiscoveryListenerTest(unittest.TestCase):
         service_discovery_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         ttl = struct.pack('b', 1)
         service_discovery_socket.setsockopt(socket.IPPROTO_IP, socket.IP_MULTICAST_TTL, ttl)
-        request = '{"request" : {"version" : "1"}}'
+        request = '{"request" : "locate"}'
         multicast_group = ("224.3.29.71", 8081)
 
         try:

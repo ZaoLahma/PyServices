@@ -33,11 +33,11 @@ class ServiceDiscoveryListener:
         else:
             print("Data: {}".format(data))
             request = json.loads(data[0].decode())
-            version = request["request"]["version"]
+            locate = request["request"]
 
             port_no = None
             try:
-                port_no = self.config.get_config("service-port-numbers", version)
+                port_no = self.config.get_config("locate-service-handler", "port-no")
             except KeyError:
                 port_no = -1
 
