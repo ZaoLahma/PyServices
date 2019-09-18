@@ -28,8 +28,6 @@ class ServiceDiscoveryListenerTest(unittest.TestCase):
     def tearDown(self):
         print("tearDown")
         self.service_scheduler.stop()
-        self.server.shutdown()
-        self.server.server_close()
         self.server_scheduler.stop()
 
     def test_service_discovery(self):

@@ -43,6 +43,7 @@ class ServiceDiscoveryScheduler(Thread):
 
     def remove_runnable(self, runnable):
         print("Removing runnable {}".format(runnable))
+        runnable.stop()
         with self.exec_lock:
-            runnable.de_init()
             self.runnables.remove(runnable)
+        runnable.de_init()

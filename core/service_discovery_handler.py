@@ -12,6 +12,13 @@ class ServerRunner(ServiceRunnable):
     def run(self):
         self.server.serve_forever()
 
+    def stop(self):
+        self.server.shutdown()
+
+    def de_init(self):
+        print("de_init ServerRunner")
+        self.server.server_close()
+
 class ServerFactory:
     @staticmethod
     def create_server(config):
