@@ -55,7 +55,7 @@ class ServiceDiscoveryListenerTest(unittest.TestCase):
         try:
             service_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             service_socket.connect(("192.168.0.184", 8088))
-            service_socket.sendall('{"register-service" : {"value" : {"name" : "test-service", "version" : 1, "port-no" : 8083}}}\r\n'.encode())
+            service_socket.sendall('{"request" : {"service" : "register-service", "value" : {"name" : "test-service", "version" : 1, "port-no" : 8083}}}\r\n'.encode())
             response = service_socket.recv(4096)
             print("Response test_find_service: {}".format(response))
         finally:
