@@ -41,7 +41,19 @@ class ServiceHandler(socketserver.StreamRequestHandler):
         data = None
         while True:
             data = self.rfile.readline()
-            print("Data: {}".format(data.decode("utf-8")))
+
+            try:
+                data_json = json.loads(data.decode("utf-8"))
+
+                request = data_json["request"]
+                service = request["service"]
+                print("ServiceHandler - Received request for service: {}".format(service))
+                service_data = request["value"]
+                print("ServiceHandler - Service data:\r\n{}".format(service_data))
+            except:
+                print("ServiceHandler - Failed to decode {}".format(data))
+
+            print("data_json: {}".format(data_json))
 
             self.wfile.write("RESPONSE\r\n".encode("utf-8"))
             if not data:
