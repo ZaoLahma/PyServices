@@ -3,7 +3,10 @@ import struct
 import sys
 import json
 
-class ServiceDiscoveryListener:
+from .service_nw_misc import ServiceNwMisc
+from .service_runnable import ServiceRunnable
+
+class ServiceDiscoveryListener(ServiceRunnable):
     def __init__(self, config):
         print("Init called")
         self.config = config
@@ -21,7 +24,7 @@ class ServiceDiscoveryListener:
         self.multicast_socket.setsockopt(socket.IPPROTO_IP, socket.IP_ADD_MEMBERSHIP, mreq)
         self.multicast_socket.settimeout(0.001)
 
-        self.own_ip = self.get_own_ip()
+        self.own_ip = ServiceNwMisc.get_own_ip()
 
     def run(self):
         try:
@@ -33,11 +36,11 @@ class ServiceDiscoveryListener:
         else:
             print("Data: {}".format(data))
             request = json.loads(data[0].decode())
-            locate = request["request"]
+            client_request = request["request"]
 
             port_no = None
             try:
-                port_no = self.config.get_config("locate-service-handler", "port-no")
+                port_no = self.config.get_config(client_request, "port-no")
             except KeyError:
                 port_no = -1
 
@@ -57,10 +60,7 @@ class ServiceDiscoveryListener:
             finally:
                 response_socket.close()
 
-    def get_own_ip(self):
-        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        s.connect(('5.255.255.255', 1))
-        IP = s.getsockname()[0]
-        s.close()
-        return IP
+    def de_init(self):
+        print("de_init listener")
+        self.multicast_socket.close()
                 
