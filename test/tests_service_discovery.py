@@ -9,6 +9,7 @@ from core.service_discovery_scheduler import ServiceDiscoveryScheduler
 from core.service_discovery_config import ServiceDiscoveryConfig
 from core.service_discovery_handler import ServerRunner
 from core.service_discovery_handler import ServerFactory
+from core.service_nw_misc import ServiceNwMisc
 
 class ServiceDiscoveryListenerTest(unittest.TestCase):
 
@@ -49,13 +50,14 @@ class ServiceDiscoveryListenerTest(unittest.TestCase):
         finally:
             service_discovery_socket.close()
 
-    def test_find_service(self):
+    def test_register_service(self):
         try:
             service_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            service_socket.connect(("192.168.0.184", 8088))
+            own_ip = ServiceNwMisc.get_own_ip()
+            service_socket.connect((own_ip, 8088))
             service_socket.sendall('{"request" : {"service" : "register-service", "value" : {"name" : "test-service", "version" : 1, "port-no" : 8083}}}\r\n'.encode())
             response = service_socket.recv(4096)
-            print("Response test_find_service: {}".format(response))
+            print("Response test_register_service: {}".format(response))
         finally:
             service_socket.close()
 

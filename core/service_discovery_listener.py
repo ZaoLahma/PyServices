@@ -49,6 +49,7 @@ class ServiceDiscoveryListener(ServiceRunnable):
             response = {}
             response["response"] = {}
             response["response"]["port-no"] = port_no
+            response["response"]["address"] = self.own_ip
 
             response = json.dumps(response)
 

@@ -5,6 +5,9 @@ import json
 from .service_nw_misc import ServiceNwMisc
 from .service_runnable import ServiceRunnable
 
+# Oof... Ugly
+global_config = None
+
 class ServerRunner(ServiceRunnable):
     def __init__(self, server):
         self.server = server
@@ -24,6 +27,10 @@ class ServerFactory:
     def create_server(config):
         print("create_server called")
 
+        global global_config
+        if None == global_config:
+            global_config = config
+
         handler_ip_address = ServiceNwMisc.get_own_ip()
         handler_port_no = config.get_config("locate-service-handler", "port-no")
 
@@ -34,6 +41,8 @@ class ServiceHandlerServer(socketserver.ThreadingMixIn, socketserver.TCPServer):
     allow_reuse_address = True
 
 class ServiceHandler(socketserver.StreamRequestHandler):
+    # Decode and route request. 
+    # Only two possibilities - register service or get service
     def handle(self):
         client = f'{self.client_address} on {threading.currentThread().getName()}'
         print(f'Connected: {client}')
@@ -41,15 +50,16 @@ class ServiceHandler(socketserver.StreamRequestHandler):
         data = None
         while True:
             data = self.rfile.readline()
-
             try:
                 data_json = json.loads(data.decode("utf-8"))
 
                 request = data_json["request"]
                 service = request["service"]
-                print("ServiceHandler - Received request for service: {}".format(service))
-                service_data = request["value"]
-                print("ServiceHandler - Service data:\r\n{}".format(service_data))
+
+                if "register-service" == service:
+                    self.handle_register_service(request)
+                elif "get-service" == service:
+                    self.handle_get_service(request)
             except:
                 print("ServiceHandler - Failed to decode {}".format(data))
 
@@ -60,4 +70,21 @@ class ServiceHandler(socketserver.StreamRequestHandler):
                 break
 
         print("Received: {}".format(data))
+    
+    # Set new service information in the config
+    def handle_register_service(self, request):
+        print("ServiceHandler - handle_register_service")
+        service_data = request["value"]
+        service_name = service_data["name"]
+        service_version = service_data["version"]
+        service_port_no = service_data["port-no"]
+
+        global global_config
+        global_config.add_service(service_name, service_version, service_port_no)
+
+        print("ServiceHandler - Service data:\r\n{}".format(service_data))
+
+    # Lookup service in config
+    def handle_get_service(self, request):
+        print("ServiceHandler - handle_get_service")
 
