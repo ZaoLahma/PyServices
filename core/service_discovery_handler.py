@@ -50,6 +50,7 @@ class ServiceHandler(socketserver.StreamRequestHandler):
         data = None
         while True:
             data = self.rfile.readline()
+            response = None
             try:
                 data_json = json.loads(data.decode("utf-8"))
 
@@ -57,15 +58,15 @@ class ServiceHandler(socketserver.StreamRequestHandler):
                 service = request["service"]
 
                 if "register-service" == service:
-                    self.handle_register_service(request)
+                    response = self.handle_register_service(request)
+                    print("ServiceHandler - Response {}".format(response))
                 elif "get-service" == service:
-                    self.handle_get_service(request)
+                    response = self.handle_get_service(request)
             except:
                 print("ServiceHandler - Failed to decode {}".format(data))
 
-            print("data_json: {}".format(data_json))
-
-            self.wfile.write("RESPONSE\r\n".encode("utf-8"))
+            if None != response:
+                self.wfile.write((response + "\r\n").encode("utf-8"))
             if not data:
                 break
 
@@ -77,14 +78,45 @@ class ServiceHandler(socketserver.StreamRequestHandler):
         service_data = request["value"]
         service_name = service_data["name"]
         service_version = service_data["version"]
+        service_address = service_data["address"]
         service_port_no = service_data["port-no"]
 
         global global_config
-        global_config.add_service(service_name, service_version, service_port_no)
+        global_config.add_service(service_name, service_version, service_address, service_port_no)
 
         print("ServiceHandler - Service data:\r\n{}".format(service_data))
+
+        return '{"response" : {"register-service" : {"result" : "added"}}}'
 
     # Lookup service in config
     def handle_get_service(self, request):
         print("ServiceHandler - handle_get_service")
+        service_name = request["value"]["name"]
+        service_version = request["value"]["version"]
+
+        response = None
+        global global_config
+        fail = True
+        try:
+            service = global_config.get_config("services", service_name)
+            if service["version"] == service_version:
+                response = {}
+                response["response"] = {}
+                response["response"]["get-service"] = {}
+                response["response"]["get-service"]["result"] = {}
+                response["response"]["get-service"]["result"]["address"] = service["address"]
+                response["response"]["get-service"]["result"]["port-no"] = service["port-no"]
+                response = json.dumps(response)
+                fail = False
+        except KeyError:
+            fail = True
+        
+        if fail:
+            print("ServiceHandler - Service {} ({}) not found".format(service_name, service_version))
+            response = '{"response" : {"get-service" : {"result" : {"address" : "", "port-no": -1}}}'
+
+        print("Response: {}".format(response))
+
+        return response
+
 

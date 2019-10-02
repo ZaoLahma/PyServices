@@ -50,14 +50,24 @@ class ServiceDiscoveryListenerTest(unittest.TestCase):
         finally:
             service_discovery_socket.close()
 
-    def test_register_service(self):
+    def test_register_and_get_service(self):
         try:
             service_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             own_ip = ServiceNwMisc.get_own_ip()
             service_socket.connect((own_ip, 8088))
-            service_socket.sendall('{"request" : {"service" : "register-service", "value" : {"name" : "test-service", "version" : 1, "port-no" : 8083}}}\r\n'.encode())
+            service_socket.sendall('{"request" : {"service" : "register-service", "value" : {"name" : "test-service", "version" : 1, "address" : "127.0.0.1", "port-no" : 9999}}}\r\n'.encode())
             response = service_socket.recv(4096)
             print("Response test_register_service: {}".format(response))
+            response = json.loads(response.decode())
+            print("json response: {}".format(response))
+            self.assertEqual("added", response["response"]["register-service"]["result"])
+
+            service_socket.sendall('{"request" : {"service" : "get-service", "value" : {"name" : "test-service", "version" : 1}}}\r\n'.encode())
+            response = service_socket.recv(4096)
+            response = json.loads(response)
+            self.assertEqual(9999, response["response"]["get-service"]["result"]["port-no"])
+            self.assertEqual("127.0.0.1", response["response"]["get-service"]["result"]["address"])
+
         finally:
             service_socket.close()
 

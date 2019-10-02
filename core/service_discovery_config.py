@@ -10,12 +10,13 @@ class ServiceDiscoveryConfig:
     def get_config(self, config_group, config_name):
         return self.config[config_group][config_name]["value"]
 
-    def add_service(self, service_name, service_version, service_port_no):
+    def add_service(self, service_name, service_version, service_address, service_port_no):
         try:
             service_config = {}
             service_config[service_name] = {}
             service_config[service_name]["value"] = {}
             service_config[service_name]["value"]["version"] = service_version
+            service_config[service_name]["value"]["address"] = service_address
             service_config[service_name]["value"]["port-no"] = service_port_no
             self.config["services"].update(service_config)
         except Exception as e:
